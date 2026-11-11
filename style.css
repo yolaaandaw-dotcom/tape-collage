@@ -1,0 +1,211 @@
+:root {
+  --desk: #cfcac0;
+  --paper: #f6f3ec;
+  --ink: #1d1b18;
+  --accent: #e5452f;
+  --tray-w: clamp(230px, 36vw, 420px);
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  display: flex; flex-direction: column;
+  font: 13px/1.4 -apple-system, "PingFang SC", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: var(--ink); background: var(--desk) var(--desk-noise, none);
+  overflow: hidden; user-select: none; -webkit-user-select: none;
+}
+button { font: inherit; color: inherit; }
+img { -webkit-user-drag: none; user-select: none; }
+
+/* ---------- top bar ---------- */
+.topbar { min-height: 48px; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: space-between; padding: 6px 12px; background: #ece8df; border-bottom: 1px solid #b8b2a5; }
+.logo { display: flex; align-items: baseline; gap: 10px; }
+.logo-main { font-size: 18px; letter-spacing: -.5px; }
+.logo-main b { color: var(--accent); }
+.logo-sub { font-size: 11px; color: #7a7367; letter-spacing: 1px; }
+.nav { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+@media (max-width: 900px) { .logo-sub { display: none; } .pill { padding: 4px 8px; } }
+.pill {
+  border: 1px solid #8f8778; background: linear-gradient(#fdfcf9, #e8e3d8); border-radius: 999px; padding: 4px 11px; cursor: pointer;
+  box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0,0,0,.2);
+}
+.pill:hover { background: linear-gradient(#fff, #f0ece3); }
+.pill:active { transform: translateY(1px); box-shadow: inset 0 2px 3px rgba(0,0,0,.25); }
+.pill[aria-pressed="false"] { opacity: .5; text-decoration: line-through; }
+.pill.danger { color: #9b2416; }
+.seg { display: inline-flex; border: 1px solid #8f8778; border-radius: 999px; overflow: hidden; background: #e8e3d8; box-shadow: inset 0 1px 0 #fff; }
+.seg button { border: 0; background: transparent; padding: 4px 10px; cursor: pointer; }
+.seg button + button { border-left: 1px solid #c4bdb0; }
+.seg button.on { background: var(--ink); color: #fff; }
+.field { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #5c564c; }
+.field input[type=range] { width: 90px; accent-color: var(--accent); }
+.field b { font-weight: 600; color: var(--ink); min-width: 34px; }
+
+/* ---------- desk ---------- */
+.desk { flex: 1; min-height: 0; display: grid; grid-template-columns: var(--tray-w) 1fr; gap: 14px; padding: 14px; }
+.window { display: flex; flex-direction: column; min-height: 0; background: #e6e2d9; border: 1px solid #8f8778; border-radius: 4px; box-shadow: 0 1px 0 #fff inset, 0 14px 30px -16px rgba(0,0,0,.55); }
+.titlebar { display: flex; align-items: center; gap: 8px; padding: 5px 10px; font-size: 11px; letter-spacing: 1px; color: #5c564c; border-bottom: 1px solid #b8b2a5; }
+.tb-lines { flex: 1; height: 7px; background: repeating-linear-gradient(#8f8778 0 1px, transparent 1px 3px); opacity: .6; }
+.tray-tools { display: flex; gap: 8px; align-items: stretch; padding: 8px; border-bottom: 1px solid #b8b2a5; }
+.dropzone { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 6px 10px; border: 1.5px dashed #8f8778; border-radius: 4px; cursor: pointer; background: #f1eee6; }
+.dropzone small { color: #7a7367; font-size: 11px; }
+.dropzone.over, body.file-over .dropzone { border-color: var(--accent); background: #fff3f0; }
+
+/* ---------- tray: magazine pages ---------- */
+.tray { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 0 40px; background: #d8d3c8; }
+.tray-empty { margin: 40px 24px; color: #6b6558; text-align: center; line-height: 1.8; }
+.src {
+  zoom: var(--src-zoom, 1);
+  position: relative; width: 400px; margin: 0 auto 16px; background: #fff; touch-action: none; cursor: crosshair;
+  box-shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 18px -10px rgba(0,0,0,.5);
+  transition: translate .3s cubic-bezier(.3,1.6,.5,1);
+}
+.src.tugged { transition: translate .05s linear; }
+.src > img { display: block; width: 400px; height: auto; pointer-events: none; }
+.src .scars, .src .tapes { position: absolute; inset: 0; }
+.src .scars { pointer-events: none; }
+.src .tapes { pointer-events: none; }
+.src .tapes .tape { pointer-events: auto; }
+.src-del { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%; border: 1px solid #8f8778; background: #fff; cursor: pointer; opacity: 0; transition: opacity .15s; z-index: 5; }
+.src:hover .src-del { opacity: .85; }
+.src-label { position: absolute; left: 6px; bottom: 6px; font-size: 10px; color: #7a7367; background: rgba(255,255,255,.7); padding: 1px 5px; border-radius: 2px; pointer-events: none; opacity: 0; transition: opacity .15s; }
+.src:hover .src-label { opacity: 1; }
+
+/* ---------- board ---------- */
+.board-window { position: relative; }
+.board { position: relative; flex: 1; overflow: hidden; background: var(--paper) var(--paper-noise, none); touch-action: none; cursor: crosshair; }
+.board-hint { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 92%; color: #8c8578; line-height: 1.9; text-align: center; pointer-events: none; transition: opacity .4s; }
+.board-hint p { margin: 0; }
+.board-hint .dim { font-size: 11px; opacity: .75; margin-top: 10px; }
+.board.has-tapes .board-hint { opacity: 0; }
+.statusbar { display: flex; gap: 16px; align-items: center; padding: 4px 10px; font-size: 11px; color: #5c564c; border-top: 1px solid #b8b2a5; }
+.statusbar .hint { flex: 1; text-align: right; opacity: .8; }
+
+/* ---------- scars: the magazine surface the tape pulled off ---------- */
+.scar {
+  position: absolute; left: 0; transform-origin: 0 50%; pointer-events: none;
+  background: #f4f0e7 var(--fiber, none);
+  -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  opacity: .96;
+}
+
+/* ---------- tape ---------- */
+.tape {
+  position: absolute; left: 0; transform-origin: 0 50%; cursor: grab; touch-action: none;
+  --lx: -9999px; --ly: 0px; --lk: 1; --gt: .3; --gb: .25; --fs: -100px; --fd: 90deg;
+  filter: drop-shadow(0 .5px .7px rgba(0,0,0,.12));
+  will-change: transform;
+}
+.tape:active { cursor: grabbing; }
+.tp-serr { position: absolute; inset: 0; }
+.tape.flipped .tp-serr { transform: scaleY(-1); }
+.tp-body { position: absolute; inset: 0; }
+.tp-body::after {           /* shadow of the lifted flap falling on the stuck part */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(var(--fd), transparent calc(var(--fs) - 1px), rgba(0,0,0,.28) var(--fs), rgba(0,0,0,.08) calc(var(--fs) + 7px), transparent calc(var(--fs) + 16px));
+}
+.tp-inks { position: absolute; inset: 0; }
+.tp-ink {
+  position: absolute; inset: 0; overflow: hidden;
+  -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  opacity: .86; filter: contrast(.94) saturate(.92);
+}
+.tp-img { position: absolute; left: 0; top: 50%; transform-origin: 0 0; background-repeat: no-repeat; }
+.tp-img .scar { opacity: 1; }
+.tp-film {
+  position: absolute; inset: 0; pointer-events: none;
+  background-color: rgba(255, 246, 222, .08);
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,.22) 0, rgba(255,255,255,.06) 1.5px, rgba(255,255,255,0) 4px, rgba(255,255,255,0) calc(100% - 4px), rgba(255,255,255,.06) calc(100% - 1.5px), rgba(255,255,255,.22) 100%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0) 0 9px, rgba(255,255,255,.025) 9px 10px, rgba(255,255,255,0) 10px 23px);
+}
+.tp-film.back { background-color: rgba(255,255,255,.26); }
+.tp-wrinkle { position: absolute; inset: 0; pointer-events: none; }
+.tp-rubc { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }   /* milk: air under the strip, scraped away */
+.tape.rubbing { cursor: grabbing; }
+.tape.rubbing .tp-serr { transform: scaleY(.985); }
+.tp-gloss {
+  position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen;
+  /* the clear coat mirrors a lamp 230px above the desk at the pointer: a small hot core right under it and a soft
+     halo around it (the sticker project's vinyl: pow(n·h,120) + pow(n·h,16)). --lx/--ly place that point in this strip's
+     own coords, --lk undoes the tray zoom, so every strip shows the same spot. */
+  background:
+    radial-gradient(circle at var(--lx) var(--ly),
+      rgba(255,255,255,.7) 0, rgba(255,255,255,.52) calc(22px * var(--lk)), rgba(255,255,255,.2) calc(60px * var(--lk)),
+      rgba(255,255,255,.08) calc(130px * var(--lk)), rgba(255,255,255,0) calc(300px * var(--lk))),
+    linear-gradient(180deg, rgba(255,255,255,var(--gt)) 0, rgba(255,255,255,0) 22%, rgba(255,255,255,0) 78%, rgba(255,255,255,var(--gb)) 100%);
+}
+.tp-flap { position: absolute; inset: 0; display: none; pointer-events: none; transform-origin: 0 0; filter: drop-shadow(0 2px 3px rgba(0,0,0,.22)); }
+.tp-flapin { position: absolute; inset: 0; }
+.tp-flapin .tp-ink { opacity: .78; filter: contrast(.9) brightness(1.08); }
+
+/* states */
+.tape.laying { cursor: crosshair; filter: drop-shadow(0 2px 3px rgba(0,0,0,.25)); }
+.tape.laying .tp-film { background-color: rgba(255, 246, 222, .12); }
+.tape.peel-active { z-index: 9000 !important; }
+.tape.taken { opacity: 0; }       /* stays in the DOM as the pointer-capture target while its clone is in the hand */
+.tape.stick .tp-serr { animation: stick .42s cubic-bezier(.3,1.4,.5,1) both; }
+.tape.pressed .tp-serr { animation: press .28s ease-out both; }
+@keyframes press { 0% { transform: scale(1); } 40% { transform: scaleY(.9) scaleX(1.01); filter: brightness(1.08); } 100% { transform: none; } }
+@keyframes stick {
+  0%   { transform: perspective(700px) rotateX(-14deg) scale(1.03); }
+  45%  { transform: perspective(700px) rotateX(3deg) scale(1.003); }
+  70%  { transform: perspective(700px) rotateX(-1.2deg); }
+  100% { transform: none; }
+}
+.tape.flipped.stick .tp-serr { animation: none; }
+.tape.crumple { pointer-events: none; }
+.tape.crumple .tp-serr { animation: crumple .4s ease-in both; transform-origin: 50% 50%; }
+@keyframes crumple {
+  0%   { transform: scale(1); opacity: 1; }
+  100% { transform: scale(.15, .35) rotate(50deg); opacity: 0; filter: brightness(1.6); }
+}
+
+/* in hand */
+#float-layer { position: fixed; inset: 0; pointer-events: none; z-index: 10000; }
+#float-layer .tape {
+  --vx: 0; --vy: 0;
+  filter: drop-shadow(0 10px 14px rgba(0,0,0,.32)) drop-shadow(0 2px 3px rgba(0,0,0,.18));
+}
+#float-layer .tape .tp-serr { transform: perspective(700px) rotateX(calc(var(--vy) * -0.6deg)) rotateY(calc(var(--vx) * 0.6deg)) scale(1.03); transition: transform .09s ease-out; }
+#float-layer .tape.flipped .tp-serr { transform: perspective(700px) rotateX(calc(var(--vy) * -0.6deg)) rotateY(calc(var(--vx) * 0.6deg)) scale(1.03) scaleY(-1); }
+body.dragging-tape .src:hover, .src.drop-target { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- context menu / toast ---------- */
+.ctx { position: fixed; z-index: 20000; min-width: 150px; padding: 4px; background: #fff; border: 1px solid #8f8778; border-radius: 6px; box-shadow: 0 10px 24px -8px rgba(0,0,0,.5); }
+.ctx button { display: flex; justify-content: space-between; width: 100%; border: 0; background: transparent; padding: 6px 10px; text-align: left; border-radius: 4px; cursor: pointer; }
+.ctx button:hover { background: #f0ece3; }
+.ctx button.danger { color: #9b2416; }
+.ctx kbd { font: 10px/1 monospace; color: #8c8578; }
+.toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 30000; background: var(--ink); color: #fff; padding: 8px 14px; border-radius: 6px; font-size: 12px; max-width: 70vw; box-shadow: 0 8px 20px -6px rgba(0,0,0,.6); }
+
+/* ---------- tutorial ---------- */
+.pill.dark { background: var(--ink); color: #fff; border-color: var(--ink); }
+.pill.dark:hover { background: #333; }
+.tut { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 15000; pointer-events: none; }
+.tut-card { pointer-events: auto; display: grid; grid-template-columns: 150px 1fr; grid-template-rows: auto auto; gap: 6px 16px; align-items: center; width: min(560px, 92vw); padding: 14px 16px; background: #fff; border: 1px solid #8f8778; border-radius: 10px; box-shadow: 0 18px 40px -14px rgba(0,0,0,.55); animation: tut-in .35s cubic-bezier(.3,1.3,.5,1) both; }
+@keyframes tut-in { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+.tut-pic { grid-row: 1 / 3; width: 150px; height: 96px; }
+.tut-pic svg { width: 100%; height: 100%; display: block; }
+.tut-step { font-size: 11px; letter-spacing: 1px; color: #8c8578; }
+.tut-card h3 { margin: 2px 0 4px; font-size: 15px; }
+.tut-card p { margin: 0; color: #5c564c; line-height: 1.55; }
+.tut-actions { grid-column: 2; display: flex; gap: 8px; justify-content: flex-end; }
+.tut-done .tut-pic { display: none; }
+.tut-done .tut-card { grid-template-columns: 1fr; }
+.tut-done .tut-actions { grid-column: 1; }
+/* which part of the desk the step is about */
+body.tut-1 .tray-window, body.tut-2 .tray-window, body.tut-3 .tray-window, body.tut-4 .board-window { outline: 3px solid var(--accent); outline-offset: -3px; }
+.tut-card .pill:active { transform: translateY(1px); }
+/* little animations in the pictures */
+.tp-anim-tape { animation: tut-lay 2.2s ease-in-out infinite; transform-origin: 0 50%; }
+@keyframes tut-lay { 0% { transform: scaleX(0); } 55% { transform: scaleX(1); } 85% { transform: scaleX(1); } 100% { transform: scaleX(1); } }
+.tp-anim-finger { animation: tut-rub 1.4s ease-in-out infinite alternate; }
+@keyframes tut-rub { from { transform: translateX(-26px); } to { transform: translateX(26px); } }
+.tp-anim-milk { animation: tut-milk 2.8s ease-in-out infinite; }
+@keyframes tut-milk { 0% { opacity: .9; } 70% { opacity: .15; } 100% { opacity: .15; } }
+.tp-anim-flap { animation: tut-peel 2.4s ease-in-out infinite; transform-origin: 0 50%; }
+@keyframes tut-peel { 0% { transform: translateX(0) scaleX(-1); opacity: 0; } 10% { opacity: 1; } 60% { transform: translateX(80px) scaleX(-1); opacity: 1; } 80% { transform: translateX(120px) scaleX(-1); opacity: 0; } 100% { opacity: 0; } }
+.tp-anim-stuck { animation: tut-stuck 2.4s ease-in-out infinite; }
+@keyframes tut-stuck { 0% { clip-path: inset(0 0 0 0); } 60% { clip-path: inset(0 0 0 40px); } 80% { clip-path: inset(0 0 0 60px); } 100% { clip-path: inset(0 0 0 60px); } }
+.tp-anim-move { animation: tut-move 2.6s ease-in-out infinite; }
+@keyframes tut-move { 0% { transform: translate(0, 0) rotate(0); } 20% { transform: translate(0, -10px) rotate(-6deg); } 65% { transform: translate(78px, -6px) rotate(-6deg); } 80% { transform: translate(78px, 0) rotate(0); } 100% { transform: translate(78px, 0) rotate(0); } }

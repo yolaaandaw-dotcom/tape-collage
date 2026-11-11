@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tape Collage</title>
+<link rel="stylesheet" href="style.css?v=5">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo">
+    <span class="logo-main">Tape<b>Collage</b></span>
+  </div>
+  <nav class="nav">
+    <div class="seg" id="width-seg" title="Tape width">
+      <button data-w="44">narrow</button><button data-w="76" class="on">medium</button><button data-w="120">wide</button>
+    </div>
+    <label class="field" title="How much ink comes off where you never rubbed. After laying a strip, rub back and forth over its middle: rubbed areas take much more">pressure <input type="range" id="ink-range" min="0" max="100" value="25"><b id="ink-val">25%</b></label>
+    <button class="pill" id="btn-tut" title="See how to play again">? How to</button>
+    <button class="pill" id="btn-undo" title="Undo the last step">↶ Undo</button>
+    <button class="pill" id="btn-sound" aria-pressed="true" title="Sound on / off">♪ Sound</button>
+    <button class="pill" id="btn-export" title="Save the board as a PNG">⤓ Save PNG</button>
+    <button class="pill danger" id="btn-clear" title="Tear every strip off the board">✕ Clear</button>
+  </nav>
+</header>
+
+<main class="desk">
+
+  <section class="window tray-window" id="tray-window">
+    <div class="titlebar"><span class="tb-lines"></span><span class="tb-title">magazine</span><span class="tb-lines"></span></div>
+    <div class="tray-tools">
+      <label class="dropzone" id="dropzone" title="Click to pick files. You can also drop images here, paste with Ctrl/⌘+V, or drag an image straight over from another browser tab">
+        <b>+ Add images</b><small>drop · paste · drag from another tab</small>
+        <input type="file" id="file-input" accept="image/*" multiple hidden>
+      </label>
+      <button class="pill" id="btn-url" title="Paste an image URL">URL</button>
+      <button class="pill" id="btn-bm" title="Make a bookmarklet: click any image on any page and it lands here">Bookmarklet</button>
+    </div>
+    <div class="tray" id="tray"></div>
+  </section>
+
+  <section class="window board-window" id="board-window">
+    <div class="titlebar"><span class="tb-lines"></span><span class="tb-title">untitled.collage</span><span class="tb-lines"></span></div>
+    <div class="board" id="board" aria-label="collage board">
+      <div class="board-hint" id="board-hint">
+        <p>① Put a magazine page on the left (drop an image in)</p>
+        <p>② <b>Press and drag</b> across it to pull out a strip of tape</p>
+        <p>③ <b>Rub back and forth</b> over the middle to press it down. Only rubbed areas pick up ink</p>
+        <p>④ Grab one end and <b>fold it back</b> to peel it off</p>
+        <p>⑤ Let go here. Stack, turn, peel again, stick again</p>
+        <p class="dim">drag on empty board = clear tape · Shift+drag = tape over tape · wheel on a strip = rotate · double-click = flip · right-click = more</p>
+      </div>
+    </div>
+    <div class="statusbar">
+      <span>strips <b id="count">0</b></span>
+      <span class="hint" id="status-hint">pull a strip over a page → rub the middle → grab an end and peel → stick it down</span>
+    </div>
+  </section>
+
+</main>
+
+<div id="float-layer"></div>
+<div class="ctx" id="ctx" hidden>
+  <button data-act="flip">Flip over <kbd>F</kbd></button>
+  <button data-act="top">Bring to front</button>
+  <button data-act="bottom">Send to back</button>
+  <button data-act="del" class="danger">Crumple <kbd>⌫</kbd></button>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<div class="tut" id="tut" hidden>
+  <div class="tut-card">
+    <div class="tut-pic" id="tut-pic"></div>
+    <div class="tut-body">
+      <div class="tut-step" id="tut-step"></div>
+      <h3 id="tut-title"></h3>
+      <p id="tut-text"></p>
+    </div>
+    <div class="tut-actions">
+      <button class="pill" id="tut-skip">Skip</button>
+      <button class="pill dark" id="tut-next">Next →</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js?v=5"></script>
+</body>
+</html>
