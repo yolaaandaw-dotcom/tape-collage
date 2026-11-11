@@ -2,6 +2,8 @@
 
 **Live site 在线网址：https://yolaaandaw-dotcom.github.io/tape-collage/**
 
+![Tape Collage: strips of clear tape carrying ink lifted off magazine pages, stacked on a board](docs/screenshot.webp)
+
 透明胶带按在杂志页上、撕下来，油墨跟着胶带走，杂志表面留下白色的伤痕；
 一条条半透明的胶带叠在画板上，互相透出来。纯静态 HTML，没有构建步骤，没有音频文件。
 
