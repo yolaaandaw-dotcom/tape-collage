@@ -1,63 +1,68 @@
-# Tape Collage ✦ 胶带拼贴
+# Tape Collage
 
-**Live site 在线网址：https://yolaaandaw-dotcom.github.io/tape-collage/**
+**Live site: https://yolaaandaw-dotcom.github.io/tape-collage/**
 
 ![Tape Collage: strips of clear tape carrying ink lifted off magazine pages, stacked on a board](docs/screenshot.webp)
 
-透明胶带按在杂志页上、撕下来，油墨跟着胶带走，杂志表面留下白色的伤痕；
-一条条半透明的胶带叠在画板上，互相透出来。纯静态 HTML，没有构建步骤，没有音频文件。
+Press clear tape onto a magazine page, peel it off, and the ink comes away with it, leaving a white
+scar on the page. Translucent strips pile up on the board and show through each other.
+Pure static HTML: no build step, no audio files.
 
-## 跑起来
+## Run it
 
-直接双击 `index.html` 就能用。想用「书签」从别的网页抓图，需要 http 地址：
+Double-click `index.html`. To grab images from other sites with the bookmarklet, the page needs an http address:
 
 ```bash
 python3 -m http.server 8790
 ```
 
-然后打开 http://localhost:8790/ 。
+then open http://localhost:8790/ .
 
-## 怎么玩
+## How to play
 
-第一次打开会有一个四步教程，跟着做一遍就会自动往下走（顶栏「? 教程」随时再看）。
+The first visit shows a four-step tutorial that advances as you do each step ("? How to" in the top bar brings it back).
 
-1. **放杂志页**：把图片拖进左边（或 ⌘V 粘贴 / 点「+ 导入图片」/「链接」）。
-   从别的浏览器 tab 直接把图片拖过来也行。第一次打开会有八张示例页（`samples/`）。
-2. **贴胶带**：在杂志页上按住拖，拉出一条胶带（顶栏选窄 / 中 / 宽）。松手时「嚓」一声切断、按平。
-   贴好以后，在胶带**中间按住来回刮**：没刮的地方胶带下面有空气、发白发雾，刮过的地方变清透压实，
-   撕的时候只有刮过的地方才会把油墨带走（刮得越多带得越多）。顶栏「底压」滑杆是完全不刮时能带走的量（默认 25%）。
-3. **撕下来**：抓住胶带靠两头的一角（两端各 20%），**往回折**。折痕跟着你拉的方向走（斜着拉就是斜折角，最多 65°），
-   胶会一顿一顿地放手（stick-slip），折过去的那面是胶面，能看到镜像的油墨。拉过一半它就整条脱下来，到你手里。
-   杂志页上留下白色毛面的伤痕；下次再贴到伤痕上，胶带只会粘到白纸。
-4. **贴上去**：拖到右边画板，松手。手里时滚轮转角度。
-5. **一条胶带粘好几个画面**：手里的胶带再按到任何一张杂志页上、再撕一次，
-   没被油墨盖住的地方会粘上新画面（第一层在最上面，后来的层从空隙里透出来）。
-6. 画板上：空白处拖 = 贴一条透明胶带（盖在别的胶带上，叠出雾蒙蒙的效果）；
-   Shift+拖 = 直接盖在胶带上；在胶带上滚轮 = 绕中心转；双击 = 翻面；右键 = 置顶 / 压底 / 揉掉；`[` `]` 转角度；⌫ 揉掉；⌘Z 撤销。
-7. **存图**：顶栏「存图」导出 PNG（用了不允许跨域的网图时会提示，另存到本地再导入即可）。
+1. **Put a page in**: drop images on the left (or ⌘V to paste, "+ Add images", "URL").
+   Dragging an image straight over from another browser tab works too. The first run comes with eight sample pages (`samples/`).
+2. **Lay a strip**: press and drag across a page to pull out a strip (narrow / medium / wide in the top bar). Let go and it is cut off with a snap and pressed down.
+   Then **rub back and forth over its middle**: where you have not rubbed there is still air under the tape and it looks milky;
+   rubbed areas go clear and press flat. When you peel, only the rubbed areas take the ink (the more you rub, the more comes off).
+   The "pressure" slider is how much comes off where you never rubbed (default 25%).
+3. **Peel it**: grab a corner near either end (the outer 20%) and **fold it back**. The fold follows the direction you pull
+   (pull sideways for a slanted fold, up to 65°), the glue lets go in stick-slip jumps, and the folded part shows the ink mirrored on its sticky side.
+   Past halfway the whole strip comes off into your hand. The page keeps a white fibrous scar; a strip laid over a scar later picks up nothing there.
+4. **Stick it down**: drag it onto the board on the right and let go. While it is in your hand, the wheel rotates it.
+5. **One strip, several pictures**: press a strip in your hand onto any other page and peel again;
+   wherever it is not already covered in ink it picks up the new picture (the first layer stays in front, later ones show through the gaps).
+6. On the board: drag on empty space = a clear strip (lay it over other strips for a hazy, layered look);
+   Shift+drag = tape straight over a strip; wheel on a strip = rotate about its middle; double-click = flip; right-click = bring to front / send to back / crumple;
+   `[` `]` rotate; ⌫ crumple; ⌘Z undo.
+7. **Save PNG**: exports the board (if a strip uses a hot-linked image from a site that blocks cross-origin reads, it says so; save that image locally and import it instead).
 
-一切自动存在浏览器的 IndexedDB 里，刷新还在。
+Everything is saved automatically in the browser's IndexedDB, so it survives a reload.
 
-## 跨 tab 抓图
+## Grabbing images from other tabs
 
-- 最简单：在别的 tab 里把图片**拖**到这个窗口，或者右键复制图片再 ⌘V。
-- 「书签」按钮会复制一段书签代码：在书签栏新建书签，网址换成它。
-  以后在任何网页点这个书签 → 页面变成准星，点一张图 → 它会出现在这里
-  （如果这里已经开着，会直接送进来；没开会新开一个）。页面需要是 http 地址才行。
+- Simplest: **drag** an image from another tab into this window, or right-click → copy image, then ⌘V here.
+- "Bookmarklet" copies a snippet: make a new bookmark in your bookmarks bar and paste the snippet as its URL.
+  On any page, click the bookmark → the page becomes a crosshair → click an image → it shows up here
+  (sent straight into an open Tape Collage tab if there is one, otherwise a new one opens). Only works when this page has an http address.
 
-## 它是怎么做的
+## How it works
 
-- **胶带**：一个旋转的 div，`clip-path` 做出撕带器的锯齿端；里面叠着油墨层、胶带膜、褶皱 / 气泡、高光。
-- **油墨**：每层是一个 `background-image` 反向变换回杂志页坐标的 div，`mask-image` 是生成的噪声遮罩：
-  大块斑驳 + 顺着胶带方向的刮痕 + 羽化的边，所以边界是模糊的，而且带一点半透明。
-  每个像素的阈值和羽化宽度由「压力」决定：底压滑杆 + 你刮过的程度（贴在页上的胶带里有一张奶白色的「空气」画布，刮是把它擦掉）。
-  再按到别的页上时，新遮罩会被已有油墨遮住的地方削弱（胶已经被盖住了）。
-- **伤痕**：杂志页上同一个遮罩的白色纤维纹理。
-- **撕**：和 sticker 项目一样的拉力模型（hold / creep / slip / detach，`PEEL_SRC` / `PEEL_BOARD`），
-  折线沿胶带走，折过去的部分 `scaleX(-1)` 镜像显示胶面。
-- **反光**：和 sticker 项目一样，一盏离桌面 230px 高的灯跟着鼠标（闲置时自己漂），光面上的倒影就是灯正下方的一个圆斑：
-  小而亮的核 + 柔和的光晕。每帧把灯的位置换算到每条胶带自己的坐标里（`--lx` / `--ly`），CSS 径向渐变用
-  `mix-blend-mode: screen` 叠上去，所以所有胶带共用同一个圆斑，和角度无关。
-- **声音**：全部 Web Audio 合成——拉胶带的嗡嗡声、切断、按平、撕的时候的噼啪和脱胶，揉掉的皱响。
+- **A strip** is a rotated div; `clip-path` gives it the serrated ends of a dispenser. Inside, stacked: ink layers, the film, creases and trapped air, the highlight.
+- **Ink**: each layer is a div with the page as `background-image`, transformed back into page coordinates, under a generated noise `mask-image`:
+  blotches + scratches along the strip + feathered edges, so the boundary is soft and a little translucent.
+  Each pixel's threshold and feather width come from "pressure": the slider plus how much you rubbed there
+  (a strip on a page carries a milky "air" canvas; rubbing erases it). Pressing a strip onto a second page, the new mask is weakened wherever ink already covers the glue,
+  and the page's existing scars are punched out of it.
+- **Scars**: the same mask, drawn on the page as white paper fibre.
+- **Peeling**: the sticker project's pull model (hold / creep / slip / detach, `PEEL_SRC` / `PEEL_BOARD`);
+  the fold line follows your pull and the folded part is mirrored with `scaleX(-1)` to show the sticky side.
+- **Reflection**: as in the sticker project, a lamp 230px above the desk follows the pointer (and drifts when idle).
+  On a flat clear coat its mirror image is a spot right under it: a small hot core and a soft halo. Each frame the lamp's position is
+  converted into every strip's own coordinates (`--lx` / `--ly`) and drawn as a CSS radial gradient with `mix-blend-mode: screen`,
+  so all strips share one and the same spot whatever their angle.
+- **Sound**: all Web Audio synthesis — the buzz of tape coming off the roll, the snap of the cut, pressing it flat, the crackle and release of a peel, the crunch of crumpling.
 
-文件：`index.html` 结构，`style.css` 外观和动画，`app.js` 全部逻辑（约 600 行）。
+Files: `index.html` (structure), `style.css` (look and animation), `app.js` (all the logic).
