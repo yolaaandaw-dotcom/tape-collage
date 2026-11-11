@@ -719,8 +719,9 @@ function removeSource(s) {
 function showTrayEmpty() { const e = div('tray-empty'); e.innerHTML = 'No pages yet.<br>Drop images here, or paste.'; trayEl.append(e); }
 
 // a few pages so the first run has something to tear (in samples/)
-const SAMPLES = [['samples/buddha.jpg', 'buddha'], ['samples/ants.jpg', 'ants'], ['samples/thorns.jpg', 'thorns'], ['samples/fish.jpg', 'fish']];
-async function addSamples() { for (const [u, n] of [...SAMPLES].reverse()) await addSource(new URL(u, location.href).href, n); }
+const SAMPLES = [['samples/buddha.jpg', 'buddha'], ['samples/ants.jpg', 'ants'], ['samples/thorns.jpg', 'thorns'], ['samples/fish.jpg', 'fish'],
+  ['samples/skeleton.jpg', 'skeleton'], ['samples/coral.jpg', 'coral'], ['samples/lips.jpg', 'lips'], ['samples/blue-coral.jpg', 'blue coral']];
+async function addSamples(only) { for (const [u, n] of [...SAMPLES].reverse()) if (!only || only.includes(n)) await addSource(new URL(u, location.href).href, n); }
 
 // ---------- import: files, paste, drag from other tabs, urls, bookmarklet ----------
 function urlFromTransfer(dt) {
@@ -820,12 +821,12 @@ const DB = {
   del(k) { if (!this.db) return Promise.reject(new Error('no db')); return new Promise((res, rej) => { const t = this.db.transaction('kv', 'readwrite').objectStore('kv').delete(k); t.onsuccess = () => res(); t.onerror = () => rej(t.error); }); },
 };
 let saveT = null;
-function save() { clearTimeout(saveT); saveT = setTimeout(() => { if (DB.db) DB.set('state', JSON.stringify({ sources: state.sources, tapes: state.tapes, scars: state.scars, zTop: state.zTop, sound: state.sound, width: state.width, ink: state.ink, tut: state.tut })).catch(() => {}); }, 400); }
+function save() { clearTimeout(saveT); saveT = setTimeout(() => { if (DB.db) DB.set('state', JSON.stringify({ sources: state.sources, tapes: state.tapes, scars: state.scars, zTop: state.zTop, sound: state.sound, width: state.width, ink: state.ink, tut: state.tut, seenSamples: state.seenSamples })).catch(() => {}); }, 400); }
 async function load() {
   try { await DB.open(); } catch (e) { return false; }
   let st = null; try { st = JSON.parse(await DB.get('state') || 'null'); } catch (e) {}
   if (!st) return false;
-  Object.assign(state, { tapes: st.tapes || [], scars: st.scars || [], zTop: st.zTop || 1, sound: st.sound !== false, width: ({ 22: 44, 38: 76, 60: 120 })[st.width] || st.width || 76, ink: (st.ink === 80 || st.ink === 35 || st.ink === 15) ? 25 : (st.ink ?? 25), tut: !!st.tut });
+  Object.assign(state, { tapes: st.tapes || [], scars: st.scars || [], zTop: st.zTop || 1, sound: st.sound !== false, width: ({ 22: 44, 38: 76, 60: 120 })[st.width] || st.width || 76, ink: (st.ink === 80 || st.ink === 35 || st.ink === 15) ? 25 : (st.ink ?? 25), tut: !!st.tut, seenSamples: st.seenSamples });
   state.sources = [];
   for (const s of st.sources || []) {
     if (s.kind === 'blob') { const b = await DB.get('blob:' + s.id).catch(() => null); if (!b) continue; SRC_URL[s.id] = URL.createObjectURL(b); }
@@ -895,6 +896,12 @@ document.addEventListener('pointerdown', () => ac(), { once: true });
   const onlyOldSample = state.sources.length && state.sources.every(x => x.name === 'sample page');
   if (onlyOldSample) { for (const x of [...state.sources]) { state.tapes = state.tapes.filter(t => !(t.on === 'src' && t.srcId === x.id)); state.scars = state.scars.filter(sc => sc.srcId !== x.id); const el = srcEl(x.id); if (el) el.remove(); DB.del('blob:' + x.id).catch(() => {}); } state.sources = []; }
   if (!had || !state.sources.length) await addSamples();
+  else {                                                        // a save from before: bring in sample pages it never had
+    const seen = new Set(state.seenSamples || state.sources.map(x => x.name));
+    const fresh = SAMPLES.map(x => x[1]).filter(n => !seen.has(n));
+    if (fresh.length) await addSamples(fresh);
+  }
+  state.seenSamples = SAMPLES.map(x => x[1]); save();
   if (!trayEl.querySelector('.src')) showTrayEmpty();
   handleHash();
   if (!state.tut) tutShow(0);
