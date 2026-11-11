@@ -250,7 +250,6 @@ function renderInks(el, item) {
       const img = div('tp-img'); img.style.width = ly.sw + 'px'; img.style.height = ly.sh + 'px';
       img.style.backgroundImage = `url("${SRC_URL[ly.srcId] || ''}")`; img.style.backgroundSize = `${ly.sw}px ${ly.sh}px`;
       img.style.transform = `rotate(${-ly.th}deg) translate(${-ly.ax}px, ${-ly.ay}px)`;
-      for (const sc of ly.scars || []) img.append(makeScarEl(sc));
       ink.append(img); box.append(ink);
     });
   }
@@ -280,6 +279,18 @@ function rubMap(item) {           // extra pressure 0..255 per pixel, from how m
   const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
   for (let i = 3; i < d.length; i += 4) d[i] = 255 - clamp(d[i] / (RUB_MILK * 255), 0, 1) * 255;
   return d;
+}
+function punchScars(maskC, item) {   // subtract this page's existing scars from a strip's ink mask (box coords)
+  const g = maskC.getContext('2d'); g.save(); g.globalCompositeOperation = 'destination-out'; g.globalAlpha = .94;
+  for (const sc of state.scars) {
+    if (sc.srcId !== item.srcId) continue;
+    const m = MASKS[sc.id.startsWith('s') ? sc.id.slice(1) : sc.id]; if (!m) continue;
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.translate(0, item.W / 2); g.rotate(-item.th * DEG); g.translate(-item.x, -item.y);      // page -> this strip's box
+    g.translate(sc.x, sc.y); g.rotate(sc.th * DEG); g.translate(0, -sc.W / 2);                // scar -> page
+    g.drawImage(m, 0, 0, sc.L, sc.W);
+  }
+  g.restore();
 }
 function rubStroke(item, x0, y0, x1, y1, speed) {   // soft stamps along the stroke: a wide faint pad, a narrow firmer nail
   const g = rubCanvas(item).getContext('2d'); g.globalCompositeOperation = 'destination-out';
@@ -445,8 +456,9 @@ function startPeel(e, el, item) {
   if (item.on === 'src') {                                      // what this press will lift: a new ink layer + the hole it leaves
     const src = srcOf(item.srcId);
     const maskC = makeMask(item.L, item.W, Math.floor(Math.random() * 2 ** 31), item.inks.map(l => MASKS[l.id]).filter(Boolean), state.ink / 100, rubMap(item));
+    punchScars(maskC, item);                                    // where the page is already bare there is no ink to take
     const mask = maskC.toDataURL(), id = uid(); MASKS[id] = maskC;
-    const layer = { id, srcId: item.srcId, ax: item.x, ay: item.y, th: item.th, sw: SW, sh: src.sh, mask, scars: state.scars.filter(s => s.srcId === item.srcId).map(s => ({ ...s })) };
+    const layer = { id, srcId: item.srcId, ax: item.x, ay: item.y, th: item.th, sw: SW, sh: src.sh, mask };
     const scar = { id: 's' + id, srcId: item.srcId, x: item.x, y: item.y, th: item.th, L: item.L, W: item.W, mask };
     item.inks.push(layer); renderInks(el, item);
     const scarEl = makeScarEl(scar); scarEl.style.clipPath = 'polygon(0 0, 0 0, 0 0)'; cont.querySelector('.scars').append(scarEl);
@@ -750,7 +762,6 @@ async function exportPNG() {
   g.fillStyle = '#f6f3ec'; g.fillRect(0, 0, r.width, r.height);
   const imgs = {};
   for (const s of state.sources) { imgs[s.id] = await new Promise(res => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => res(null); im.src = SRC_URL[s.id]; }); }
-  const fiber = await new Promise(res => { const im = new Image(); im.onload = () => res(im); im.src = getComputedStyle(document.documentElement).getPropertyValue('--fiber').trim().slice(4, -1); });
   const maskImg = async url => new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = url; });
   const tapes = state.tapes.filter(t => t.on === 'board').sort((a, b) => a.z - b.z);
   let tainted = false;
@@ -762,12 +773,6 @@ async function exportPNG() {
       const oc = document.createElement('canvas'); oc.width = Math.ceil(t.L); oc.height = Math.ceil(t.W); const og = oc.getContext('2d');
       og.translate(0, t.W / 2); og.rotate(-ly.th * DEG); og.translate(-ly.ax, -ly.ay);
       og.drawImage(im, 0, 0, ly.sw, ly.sh);
-      for (const sc of ly.scars || []) {
-        const sm = await maskImg(sc.mask); if (!sm) continue;
-        const sc2 = document.createElement('canvas'); sc2.width = Math.ceil(sc.L); sc2.height = Math.ceil(sc.W); const sg = sc2.getContext('2d');
-        sg.fillStyle = sg.createPattern(fiber, 'repeat'); sg.fillRect(0, 0, sc2.width, sc2.height); sg.globalCompositeOperation = 'destination-in'; sg.drawImage(sm, 0, 0, sc2.width, sc2.height);
-        og.save(); og.translate(sc.x, sc.y); og.rotate(sc.th * DEG); og.globalAlpha = .96; og.drawImage(sc2, 0, -sc.W / 2); og.restore();
-      }
       og.setTransform(1, 0, 0, 1, 0, 0);
       const mk = await maskImg(ly.mask); if (mk) { og.globalCompositeOperation = 'destination-in'; og.drawImage(mk, 0, 0, oc.width, oc.height); }
       g.globalAlpha = .86; g.drawImage(oc, 0, 0); g.globalAlpha = 1;
@@ -816,6 +821,7 @@ async function load() {
   }
   for (const s of [...state.sources].reverse()) if (!s.hidden) renderSource(s);
   for (const t of state.tapes) for (const l of t.inks) maskFromDataURL(l.id, l.mask);
+  for (const sc of state.scars) maskFromDataURL(sc.id.startsWith('s') ? sc.id.slice(1) : sc.id, sc.mask);
   rerenderAll();
   return true;
 }
