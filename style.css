@@ -107,7 +107,7 @@ img { -webkit-user-drag: none; user-select: none; }
 .tp-ink {
   position: absolute; inset: 0; overflow: hidden;
   -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
-  opacity: .86; filter: contrast(.94) saturate(.92);
+  opacity: .72; filter: contrast(.94) saturate(.92);
 }
 .tp-img { position: absolute; left: 0; top: 50%; transform-origin: 0 0; background-repeat: no-repeat; }
 .tp-img .scar { opacity: 1; }
@@ -136,7 +136,7 @@ img { -webkit-user-drag: none; user-select: none; }
 }
 .tp-flap { position: absolute; inset: 0; display: none; pointer-events: none; transform-origin: 0 0; filter: drop-shadow(0 2px 3px rgba(0,0,0,.22)); }
 .tp-flapin { position: absolute; inset: 0; }
-.tp-flapin .tp-ink { opacity: .78; filter: contrast(.9) brightness(1.08); }
+.tp-flapin .tp-ink { opacity: .66; filter: contrast(.9) brightness(1.08); }
 
 /* states */
 .tape.laying { cursor: crosshair; filter: drop-shadow(0 2px 3px rgba(0,0,0,.25)); }

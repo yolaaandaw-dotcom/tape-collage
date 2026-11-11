@@ -329,7 +329,7 @@ function bindTape(el, item) {
   el.addEventListener('wheel', e => {
     if (item.on !== 'board' || drag || peel || lay) return;
     e.preventDefault(); e.stopPropagation();
-    rotateAboutCenter(item, e.deltaY > 0 ? 4 : -4);
+    rotateAboutCenter(item, wheelDeg(e));
     el.style.transition = 'transform .08s'; tapeStyle(el, item); setTimeout(() => el.style.transition = '', 100);
     lastTape = { el, item }; save();
   }, { passive: false });
@@ -376,9 +376,19 @@ function hoverLift(e, el, item) {
 
 // ---------- laying a fresh strip ----------
 let lay = null, peel = null, drag = null, lastTape = null;
+function restorePage(srcItem) {   // quietly put the ink back: the page's scars go, strips on it stay
+  if (!srcItem || !state.scars.some(sc => sc.srcId === srcItem.id)) return;
+  pushUndo(); state.scars = state.scars.filter(sc => sc.srcId !== srcItem.id);
+  for (const n of srcEl(srcItem.id).querySelectorAll('.scars .scar')) n.remove();
+  sPress(.8); save();
+}
+let hoverSrc = null;
+trayEl.addEventListener('pointerover', e => { const s = e.target.closest('.src'); hoverSrc = s ? srcOf(s.dataset.id) : null; });
+trayEl.addEventListener('pointerleave', () => hoverSrc = null);
 function onContainerDown(e, container, srcItem) {
   if (e.button && e.button !== 0) return;
   if (e.target.closest('.src-del')) return;
+  if (srcItem && e.shiftKey && e.altKey) { e.preventDefault(); restorePage(srcItem); return; }
   startLay(e, container, srcItem);
 }
 function startLay(e, container, srcItem) {
@@ -581,8 +591,10 @@ function onDragEnd(e) {
   if (it.on === 'src') attachRub(el, it); else tutHit(4);
   lastTape = { el, item: it }; sPress(); updateCount(); save();
 }
+// trackpads send many tiny deltas and mice a few big ones: rotate by the amount scrolled, gently
+const wheelDeg = e => clamp((e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY) * .06, -2.5, 2.5);
 addEventListener('wheel', e => {
-  if (drag) { e.preventDefault(); drag.item.th += e.deltaY > 0 ? 4 : -4; sTick(); }
+  if (drag) { e.preventDefault(); drag.item.th += wheelDeg(e); if (Math.random() < .25) sTick(); }
 }, { passive: false });
 
 // ---------- light: a highlight that slides along every strip as the cursor moves ----------
@@ -637,6 +649,7 @@ document.addEventListener('pointerdown', e => { if (!ctxEl.contains(e.target)) c
 addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
   if (e.key === 'Escape') { closeMenu(); return; }
+  if (e.key === 'R' && e.shiftKey && hoverSrc) { restorePage(hoverSrc); return; }
   if ((e.key === 'z' || e.key === 'Z') && (e.metaKey || e.ctrlKey)) { e.preventDefault(); undo(); return; }
   if (!lastTape || !lastTape.el.isConnected) return;
   const { el, item } = lastTape;
@@ -775,7 +788,7 @@ async function exportPNG() {
       og.drawImage(im, 0, 0, ly.sw, ly.sh);
       og.setTransform(1, 0, 0, 1, 0, 0);
       const mk = await maskImg(ly.mask); if (mk) { og.globalCompositeOperation = 'destination-in'; og.drawImage(mk, 0, 0, oc.width, oc.height); }
-      g.globalAlpha = .86; g.drawImage(oc, 0, 0); g.globalAlpha = 1;
+      g.globalAlpha = .72; g.drawImage(oc, 0, 0); g.globalAlpha = 1;
     }
     g.fillStyle = 'rgba(255,246,222,.06)'; g.fillRect(0, 0, t.L, t.W);
     const edge = g.createLinearGradient(0, 0, 0, t.W); edge.addColorStop(0, 'rgba(255,255,255,.16)'); edge.addColorStop(.08, 'rgba(255,255,255,0)'); edge.addColorStop(.92, 'rgba(255,255,255,0)'); edge.addColorStop(1, 'rgba(255,255,255,.16)');
