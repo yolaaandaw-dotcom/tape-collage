@@ -41,6 +41,10 @@ The first visit shows a four-step tutorial that advances as you do each step ("?
 
 Everything is saved automatically in the browser's IndexedDB, so it survives a reload.
 
+## Live camera
+
+**◉ Camera** opens your webcam as a page in the tray, printed through a grain filter so it sits with the magazine pages. The moment you press on it the picture holds still, and the strip you pull takes its ink from that frame. Rub, peel, stick it on the board; once the last strip has left the page the picture moves again. Every held frame is kept only as long as a strip on the board still shows its ink. Nothing is uploaded; the camera needs https or localhost.
+
 ## Grabbing images from other tabs
 
 - Simplest: **drag** an image from another tab into this window, or right-click → copy image, then ⌘V here.

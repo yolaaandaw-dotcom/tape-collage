@@ -50,6 +50,20 @@ img { -webkit-user-drag: none; user-select: none; }
 .dropzone small { color: #7a7367; font-size: 11px; }
 .dropzone.over, body.file-over .dropzone { border-color: var(--accent); background: #fff3f0; }
 
+/* ---------- tray: live camera ---------- */
+body.cam-on { --tray-w: clamp(320px, 52vw, 760px); }
+.src.live { background: #111; outline: 2px solid var(--accent); outline-offset: -2px; }
+.src.live > video { display: block; width: 400px; height: auto; min-height: 120px; transform: scaleX(-1); filter: contrast(1.1) saturate(.82) sepia(.18); pointer-events: none; }
+.cam-grain { position: absolute; inset: 0; background: var(--cam-grain); mix-blend-mode: multiply; opacity: .55; pointer-events: none; }
+.src.live.frozen { outline-color: #1d1b18; }
+.live-label { opacity: 1; display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,.55); color: #fff; }
+.live-label i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: live-blink 1.2s infinite; }
+.src.live.frozen .live-label i { background: #fff; animation: none; }
+.live-label .when-held, .src.live.frozen .live-label .when-live { display: none; }
+.src.live.frozen .live-label .when-held { display: inline; }
+@keyframes live-blink { 50% { opacity: .2; } }
+.pill[aria-pressed="true"]#btn-cam { background: var(--ink); color: #fff; border-color: var(--ink); }
+
 /* ---------- tray: magazine pages ---------- */
 .tray { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 0 40px; background: #d8d3c8; }
 .tray-empty { margin: 40px 24px; color: #6b6558; text-align: center; line-height: 1.8; }

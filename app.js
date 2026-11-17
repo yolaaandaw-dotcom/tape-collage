@@ -20,7 +20,7 @@ const boardEl = $('#board'), trayEl = $('#tray'), floatLayer = $('#float-layer')
 // magazine pages are laid out 400px wide and zoomed down to fit a narrow tray; k converts client px -> page px
 let SRC_ZOOM = 1;
 const kOf = cont => cont.classList.contains('src') ? SRC_ZOOM : 1;
-function fitTray() { SRC_ZOOM = clamp((trayEl.clientWidth - 16) / SW, .35, 1); trayEl.style.setProperty('--src-zoom', SRC_ZOOM); }
+function fitTray() { SRC_ZOOM = clamp((trayEl.clientWidth - 16) / SW, .35, document.body.classList.contains('cam-on') ? 1.8 : 1); trayEl.style.setProperty('--src-zoom', SRC_ZOOM); }
 addEventListener('resize', fitTray);
 
 const state = { sources: [], tapes: [], scars: [], zTop: 1, sound: true, width: 76, ink: 25, tut: false };
@@ -413,7 +413,7 @@ function onLayEnd(e) {
   const { item, el, container } = lay;
   container.removeEventListener('pointermove', onLayMove); container.removeEventListener('pointerup', onLayEnd); container.removeEventListener('pointercancel', onLayEnd);
   lay = null; pullStop();
-  if (item.L < 18) { el.remove(); return; }
+  if (item.L < 18) { el.remove(); updateCount(); return; }
   pushUndo();
   el.classList.remove('laying'); el.classList.add('stick'); setTimeout(() => el.classList.remove('stick'), 450);
   state.tapes.push(item); bindTape(el, item); lastTape = { el, item };
@@ -575,7 +575,8 @@ function onDragEnd(e) {
   if (dropTarget) dropTarget.classList.remove('drop-target'); dropTarget = null;
   d.holder.remove();
   const it = d.item, c = Math.cos(it.th * DEG), s = Math.sin(it.th * DEG);
-  const srcTarget = srcUnder(e.clientX, e.clientY);
+  let srcTarget = srcUnder(e.clientX, e.clientY);
+  if (srcTarget && srcTarget.classList.contains('live') && cam && !cam.frozen && !freezeLive()) { srcTarget = null; }
   let cont;
   if (srcTarget) { cont = srcTarget; it.on = 'src'; it.srcId = srcTarget.dataset.id; }
   else { cont = boardEl; it.on = 'board'; it.srcId = undefined; }
@@ -675,10 +676,11 @@ function rerenderAll() {
 function updateCount() {
   const n = state.tapes.filter(t => t.on === 'board').length; $('#count').textContent = n;
   boardEl.classList.toggle('has-tapes', n > 0);
+  if (typeof camCheck === 'function') camCheck();
 }
 
 // ---------- sources: the magazine pages ----------
-function renderSource(s) {
+function renderSource(s, before) {
   const el = div('src'); el.dataset.id = s.id; el.style.height = s.sh + 'px';
   const img = new Image(); img.src = SRC_URL[s.id]; img.draggable = false; img.referrerPolicy = 'no-referrer';
   const scars = div('scars'), tapes = div('tapes');
@@ -687,7 +689,7 @@ function renderSource(s) {
   el.append(img, scars, tapes, del, label);
   el.addEventListener('pointerdown', e => onContainerDown(e, el, s));
   del.addEventListener('click', e => { e.stopPropagation(); removeSource(s); });
-  trayEl.prepend(el);
+  if (before) before.before(el); else trayEl.prepend(el);
   const empty = trayEl.querySelector('.tray-empty'); if (empty) empty.remove();
   return el;
 }
@@ -756,6 +758,85 @@ $('#btn-bm').addEventListener('click', () => {
   navigator.clipboard.writeText(code).then(() => toast('Bookmarklet code copied. Make a new bookmark in your bookmarks bar and paste it as the URL. Then on any page: click the bookmark, click an image, and it lands here.', 9000),
     () => prompt('Copy this and save it as a bookmark:', code));
 });
+// ---------- live camera: a page that is always "now" ----------
+// The camera sits in the tray like a magazine page, printed through a grain filter. The moment
+// you press on it the picture holds still, and the strip you pull takes its ink from that
+// frame; when the last strip has been peeled off and set down, the picture moves again.
+let cam = null;                 // { el, video, stream, frozen: source | null }
+const CAM_MAX_W = 1280, CAM_FILTER = 'contrast(1.1) saturate(.82) sepia(.18)', CAM_GRAIN_A = .55;
+const CAM_GRAIN = makeNoise(140, .5); document.documentElement.style.setProperty('--cam-grain', `url(${CAM_GRAIN})`);
+let camGrainImg = null;
+function pad2(n) { return String(n).padStart(2, '0'); }
+async function openCamera() {
+  if (cam) { closeCamera(); return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('This browser has no camera access (it needs https or localhost).'); return; }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }); }
+  catch (e) { toast(e && e.name === 'NotAllowedError' ? 'Camera blocked. Allow it in the address bar and try again.' : 'No camera found.'); return; }
+  const el = div('src live'); const video = document.createElement('video');
+  video.autoplay = true; video.playsInline = true; video.muted = true; video.srcObject = stream;
+  const grain = div('cam-grain'), scars = div('scars'), tapes = div('tapes');
+  const del = document.createElement('button'); del.className = 'src-del'; del.textContent = '×'; del.title = 'Turn the camera off';
+  const label = div('src-label live-label'); label.innerHTML = '<i></i><span class="when-live">live · press and drag: the picture holds still while you tear it</span><span class="when-held">held · peel the strip off and it moves again</span>';
+  el.append(video, grain, scars, tapes, del, label);
+  el.addEventListener('pointerdown', e => {
+    if (e.button && e.button !== 0) return;
+    if (e.target.closest('.src-del')) return;
+    if (!cam.frozen && !freezeLive()) return;
+    onContainerDown(e, el, cam.frozen);
+  });
+  del.addEventListener('click', e => { e.stopPropagation(); closeCamera(); });
+  trayEl.prepend(el);
+  const empty = trayEl.querySelector('.tray-empty'); if (empty) empty.remove();
+  cam = { el, video, stream, frozen: null };
+  document.body.classList.add('cam-on'); fitTray();
+  $('#btn-cam').setAttribute('aria-pressed', 'true');
+  video.addEventListener('loadedmetadata', () => { el.style.height = Math.round(SW * video.videoHeight / video.videoWidth) + 'px'; }, { once: true });
+  stream.getVideoTracks()[0].addEventListener('ended', closeCamera);
+  trayEl.scrollTop = 0;
+}
+function closeCamera() {
+  if (!cam) return;
+  if (cam.frozen) releaseFrame(true);
+  cam.stream.getTracks().forEach(t => t.stop()); cam.el.remove(); cam = null;
+  document.body.classList.remove('cam-on'); fitTray();
+  $('#btn-cam').setAttribute('aria-pressed', 'false');
+  if (!trayEl.querySelector('.src')) showTrayEmpty();
+  updateCount(); save();
+}
+function freezeLive() {                        // hold the picture: pause, and keep this frame as a (hidden) source the strips can refer to
+  if (!cam || cam.video.readyState < 2 || !cam.video.videoWidth) return null;
+  const v = cam.video; v.pause();
+  const k = Math.min(1, CAM_MAX_W / v.videoWidth), w = Math.round(v.videoWidth * k), h = Math.round(v.videoHeight * k);
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
+  g.save(); g.translate(w, 0); g.scale(-1, 1); g.filter = CAM_FILTER; g.drawImage(v, 0, 0, w, h); g.restore();   // mirrored like the preview, printed like the preview
+  if (!camGrainImg) { camGrainImg = new Image(); camGrainImg.src = CAM_GRAIN; }
+  if (camGrainImg.complete && camGrainImg.naturalWidth) { g.globalAlpha = CAM_GRAIN_A; g.globalCompositeOperation = 'multiply'; const sc = w / SW; g.fillStyle = g.createPattern(camGrainImg, 'repeat'); g.scale(sc, sc); g.fillRect(0, 0, w / sc, h / sc); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; }
+  const d = new Date();
+  const s = { id: uid(), kind: 'blob', hidden: true, w, h, sw: SW, sh: Math.round(SW * h / w), name: `camera ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}` };
+  SRC_URL[s.id] = c.toDataURL('image/jpeg', .9);
+  c.toBlob(b => { if (!b) return; DB.set('blob:' + s.id, b).catch(() => {}); SRC_URL[s.id] = URL.createObjectURL(b); }, 'image/jpeg', .9);
+  state.sources.unshift(s);
+  cam.frozen = s; cam.el.dataset.id = s.id; cam.el.classList.add('frozen');
+  save();
+  return s;
+}
+function releaseFrame(force) {                 // let the picture move again; the held frame stays only if a strip on the board still shows its ink
+  const s = cam.frozen; if (!s) return;
+  if (force) state.tapes = state.tapes.filter(t => !(t.on === 'src' && t.srcId === s.id));
+  state.scars = state.scars.filter(sc => sc.srcId !== s.id);
+  for (const n of cam.el.querySelectorAll('.scar, .tape')) n.remove();
+  const used = state.tapes.some(t => t.inks.some(l => l.srcId === s.id));
+  if (!used) { state.sources = state.sources.filter(x => x !== s); DB.del('blob:' + s.id).catch(() => {}); }
+  cam.frozen = null; cam.el.dataset.id = ''; cam.el.classList.remove('frozen');
+  cam.video.play().catch(() => {});
+  save();
+}
+function camCheck() {                          // called whenever strips change: nothing left on the held picture and nothing in the hand -> it moves again
+  if (cam && cam.frozen && !lay && !peel && !drag && !state.tapes.some(t => t.on === 'src' && t.srcId === cam.frozen.id)) releaseFrame(false);
+}
+$('#btn-cam').addEventListener('click', openCamera);
+
 const bc = ('BroadcastChannel' in window) ? new BroadcastChannel('tapecollage') : null;
 async function handleHash() {
   const m = location.hash.match(/#add=(.+)/); if (!m) return;
@@ -833,6 +914,7 @@ async function load() {
     else SRC_URL[s.id] = s.url;
     state.sources.push(s);
   }
+  state.tapes = state.tapes.filter(t => t.on !== 'src' || (srcOf(t.srcId) && !srcOf(t.srcId).hidden));
   for (const s of [...state.sources].reverse()) if (!s.hidden) renderSource(s);
   for (const t of state.tapes) for (const l of t.inks) maskFromDataURL(l.id, l.mask);
   for (const sc of state.scars) maskFromDataURL(sc.id.startsWith('s') ? sc.id.slice(1) : sc.id, sc.mask);
@@ -850,7 +932,7 @@ const TUT = [
     pic: '<svg viewBox="0 0 150 96"><rect x="14" y="10" width="122" height="76" rx="2" fill="#e9d9c6"/><rect x="24" y="40" width="100" height="18" rx="1" fill="#f3efe6" stroke="rgba(0,0,0,.1)"/><rect x="24" y="40" width="100" height="18" rx="1" fill="rgba(200,120,90,.55)" stroke="rgba(0,0,0,.15)" class="tp-anim-stuck"/><rect x="24" y="40" width="60" height="18" rx="1" fill="rgba(255,255,255,.9)" stroke="rgba(0,0,0,.2)" class="tp-anim-flap"/></svg>' },
   { title: 'Stick it on the board', text: 'Drag it to the right and let go. You can press it onto another page, rub and peel again, so <b>one strip carries several pictures</b>; stacked strips each show through a little. Wheel to rotate, double-click to flip, right-click for more.',
     pic: '<svg viewBox="0 0 150 96"><rect x="4" y="10" width="50" height="76" rx="2" fill="#e9d9c6"/><rect x="62" y="6" width="84" height="84" rx="2" fill="#f6f3ec" stroke="#b8b2a5"/><rect x="10" y="40" width="40" height="16" rx="1" fill="rgba(200,120,90,.55)" stroke="rgba(0,0,0,.15)" class="tp-anim-move"/></svg>' },
-  { title: 'That is it', text: 'The more you stack, the dreamier it gets. For new material, drop images on the left, paste, or drag an image straight over from another browser tab. “? How to” in the top bar brings this back.', pic: '' },
+  { title: 'That is it', text: 'The more you stack, the dreamier it gets. For new material, drop images on the left, paste, drag an image straight over from another browser tab, or open the <b>Camera</b> and tear strips off the live picture. “? How to” in the top bar brings this back.', pic: '' },
 ];
 let tutStep = -1;
 const tutEl = $('#tut');
